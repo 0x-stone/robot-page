@@ -30,7 +30,7 @@ function App() {
 
   const dimensionRef = useRef<Dimension>()
 
-  const defaultVlue = "PLACE 0,0,EAST\nMOVE\nMOVE\nMOVE\nRIGHT\nMOVE\nMOVE\nMOVE\nMOVE\nLEFT\nREPORT"
+  const defaultVlue = "PLACE 0,0,EAST\nMOVE\nMOVE\nMOVE\nLEFT\nMOVE\nMOVE\nMOVE\nMOVE\nLEFT\nREPORT"
 
   useEffect(() => {
 
