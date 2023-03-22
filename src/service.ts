@@ -1,12 +1,12 @@
-import { ReplaySubject } from "rxjs"
+import { ReplaySubject, Subject } from "rxjs"
 
-enum EDirectionSymbol {
+export enum EDirectionSymbol {
   NORTH = "NORTH", WEST = 'WEST', SOUTH = 'SOUTH', EAST = 'EAST',
 }
 
 type TDirectionChain = { [key in EDirectionSymbol]: Direction }
 
-class Direction {
+export class Direction {
   public symbol: EDirectionSymbol
   public pre: Direction | null
   public next: Direction | null
@@ -18,7 +18,7 @@ class Direction {
 }
 
 
-class Dimension {
+export class Dimension {
 
   private direction: Direction
 
@@ -29,6 +29,8 @@ class Dimension {
   private directionMap: TDirectionChain
 
   public placeInitialized$ = new ReplaySubject<boolean>(1)
+
+  public stateSubject$ = new Subject<{ position: [number, number], direction: Direction, finished: boolean }>()
 
   constructor(directionMap: TDirectionChain) {
     this.directionMap = directionMap;
@@ -44,18 +46,21 @@ class Dimension {
     })
   }
 
-  public placeDirection(direction: EDirectionSymbol) {
+  public placeDirectionAndPosition(direction: EDirectionSymbol, position: [number, number]) {
     this.direction = this.directionMap[direction]
-    if (this.position) {
-      this.placeInitialized$.next(true)
-    }
+    this.position = position
+    this.checkInitialized()
   }
 
-  public placePosition(position: [number, number]) {
-    this.position = position
-    if (this.direction) {
+  private checkInitialized() {
+    if (this.direction && this.position) {
       this.placeInitialized$.next(true)
     }
+    this.emitState({ finished: false })
+  }
+
+  private emitState({ finished }: { finished: boolean }) {
+    this.stateSubject$.next({ position: [...this.position], direction: { ...this.direction }, finished })
   }
 
   public changeDirection(isNext: boolean) {
@@ -64,6 +69,11 @@ class Dimension {
     } else {
       this.direction = this.direction.pre as Direction
     }
+    this.emitState({ finished: false })
+  }
+
+  public report() {
+    this.emitState({ finished: true })
   }
 
   public move() {
@@ -91,14 +101,17 @@ class Dimension {
         this.position = [this.position[0], this.position[1] + 1]
       }
     }
+    this.emitState({ finished: false })
     return this.position
   }
 }
 
 
 
+
+
 function buildDirectionChain() {
-  const chainItems = [EDirectionSymbol.NORTH, EDirectionSymbol.WEST, EDirectionSymbol.SOUTH, EDirectionSymbol.EAST]
+  const chainItems = [EDirectionSymbol.NORTH, EDirectionSymbol.EAST, EDirectionSymbol.SOUTH, EDirectionSymbol.WEST]
   const directionInfo = chainItems.reduce((accumulator, cur, index) => {
     const direction = new Direction(cur, null, null)
     accumulator.chainMap[cur] = direction
@@ -119,13 +132,12 @@ function buildDirectionChain() {
 
     return accumulator
   }, { first: null, chainMap: {}, last: null } as { first: Direction | null, chainMap: TDirectionChain, last: Direction | null })
-
   return directionInfo.chainMap
 }
 
-export function extractComand(command:string){
+export function extractComand(command: string) {
   const commandArray = command.split(/\r?\n|\r|\n/g)
-  return commandArray.map(item=>{
+  return commandArray.map(item => {
     return item.trim().split(' ')
   })
 }
