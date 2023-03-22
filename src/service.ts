@@ -123,6 +123,13 @@ function buildDirectionChain() {
   return directionInfo.chainMap
 }
 
+export function extractComand(command:string){
+  const commandArray = command.split(/\r?\n|\r|\n/g)
+  return commandArray.map(item=>{
+    return item.trim().split(' ')
+  })
+}
+
 
 export function init() {
   const directionChain = buildDirectionChain()

@@ -1,17 +1,24 @@
 import { Button, TextareaAutosize } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
-import { init } from './service';
+import { extractComand, init } from './service';
 
 function App() {
 
   const [area, setArea] = useState<boolean[][]>([])
+
+  const commandInput = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const dimension = init()
     console.log(dimension.area)
     setArea(dimension.area)
   }, [])
+
+  function execute() {
+    const command = commandInput.current?.value as string
+    console.log(extractComand(command))
+  }
 
   return (
     <div className="App">
@@ -21,8 +28,9 @@ function App() {
           minRows={3}
           placeholder="Minimum 3 rows"
           style={{ width: 200 }}
+          ref={commandInput}
         />
-        <Button variant="contained">Execute</Button>
+        <Button onClick={execute} variant="contained">Execute</Button>
       </div>
       <div className='dimension-box'>
         <ul className='row-ctn'>
